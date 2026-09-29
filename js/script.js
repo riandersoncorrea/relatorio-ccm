@@ -1073,11 +1073,6 @@
         root.appendChild(buildInspecoesSection(reportData.inspecoes));
       }
 
-      // ---- Alerta (somente quando registrado) ----
-      if (reportData.alerta) {
-        root.appendChild(buildAlertaSection(reportData.alerta));
-      }
-
       // ---- Gráficos (um por localidade, lado a lado, mesma estrutura visual) ----
       const chartsRow = h("div", "sheet-charts-row");
       root.appendChild(chartsRow);
@@ -1097,6 +1092,11 @@
         chartsRow.appendChild(chartSection);
         chartCanvases[localidade] = canvas;
       });
+
+      // ---- Alerta (somente quando registrado) — depois dos gráficos ----
+      if (reportData.alerta) {
+        root.appendChild(buildAlertaSection(reportData.alerta));
+      }
     }
 
     // ---- Tabela de pendências (somente relatório para Troca de Turno) ----
@@ -1225,8 +1225,8 @@
     card.appendChild(h("div", "kpi-card__accent"));
 
     const body = h("div", "kpi-card__body");
-    body.appendChild(h("p", "kpi-card__label", label));
     body.appendChild(h("p", "kpi-card__value", String(value)));
+    body.appendChild(h("p", "kpi-card__label", label));
     card.appendChild(body);
 
     return card;
@@ -1311,10 +1311,22 @@
         return;
       }
 
-      const wrapWidth = canvas.parentElement.clientWidth;
-      const wrapHeight = canvas.parentElement.clientHeight;
+      // clientWidth/clientHeight incluem o padding do container: desconta-o
+      // para o canvas ocupar só a área útil e nada (eixo, valores) ser cortado.
+      const wrap = canvas.parentElement;
+      const wrapStyle = getComputedStyle(wrap);
+      const wrapWidth =
+        wrap.clientWidth -
+        parseFloat(wrapStyle.paddingLeft) -
+        parseFloat(wrapStyle.paddingRight);
+      const wrapHeight =
+        wrap.clientHeight -
+        parseFloat(wrapStyle.paddingTop) -
+        parseFloat(wrapStyle.paddingBottom);
       canvas.width = wrapWidth;
       canvas.height = wrapHeight;
+      canvas.style.width = `${wrapWidth}px`;
+      canvas.style.height = `${wrapHeight}px`;
 
       // Cor fixa por disciplina (mesma cor nos dois gráficos).
       const disciplinas = Object.values(CONFIG.DISCIPLINAS);
@@ -1346,7 +1358,7 @@
           responsive: false,
           animation: false,
           devicePixelRatio: CONFIG.EXPORT_SCALE,
-          layout: { padding: { right: 28 } },
+          layout: { padding: { top: 4, right: 28, bottom: 2 } },
           plugins: {
             legend: { display: false },
             tooltip: { enabled: false },
