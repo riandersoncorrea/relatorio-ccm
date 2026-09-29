@@ -13,8 +13,10 @@
     <header class="app-header">
       <img class="app-header__logo" src="assets/logo-gerencia.png" alt="Gerência de Serviços Operacionais">
       <div class="app-header__title">
-        <h1>Relatório de Turno — CCM</h1>
-        <p>Centro de Controle de Manutenção · Gerência de Serviços Operacionais</p>
+        <h1>Relatório de Turno | CCM</h1>
+        <p>Centro de Controle de Manutenção · Gerência de Serviços Operacionais SLS EFC
+          
+        </p>
       </div>
     </header>
 
@@ -40,17 +42,34 @@
 
           <div class="field">
             <label for="inputTurno">Turno</label>
-            <select id="inputTurno" required>
-              <option value="" disabled selected>Selecione o turno</option>
-              <option value="Diurno">Diurno</option>
-              <option value="Noturno">Noturno</option>
-            </select>
+            <input type="text" id="inputTurno" placeholder="Identificado automaticamente pelo Excel" readonly tabindex="-1" title="Preenchido automaticamente a partir da coluna &quot;Criado por&quot; do Excel">
           </div>
         </div>
 
         <div class="field field--full">
           <label for="inputObservacao">Observação do Turno</label>
           <textarea id="inputObservacao" rows="4" placeholder="Descreva ocorrências, pendências ou observações relevantes do turno..."></textarea>
+        </div>
+
+        <!-- Inspeções realizadas — exibido somente quando o turno identificado é Noturno -->
+        <div class="field field--full inspecoes" id="inspecoesBlock" hidden>
+          <label>Inspeções realizadas</label>
+          <div class="inspecoes__form">
+            <input type="text" id="inputInspecaoLocal" placeholder="Local" aria-label="Local da inspeção" maxlength="80">
+            <input type="text" id="inputInspecaoDescricao" placeholder="Situação presente" aria-label="Situação presente" maxlength="300">
+            <button type="button" id="btnAdicionarInspecao" class="btn btn--secondary">+ Adicionar inspeção</button>
+          </div>
+          <ul id="inspecoesList" class="inspecoes__list"></ul>
+          <p id="inspecoesEmpty" class="inspecoes__empty">Nenhuma inspeção adicionada.</p>
+        </div>
+
+        <!-- Alerta opcional do turno -->
+        <div class="field field--full alerta-field">
+          <label class="checkbox">
+            <input type="checkbox" id="inputAlertaAtivo">
+            <span>Registrar alerta no turno</span>
+          </label>
+          <textarea id="inputAlerta" rows="3" maxlength="800" placeholder="Descreva a situação de alerta ocorrida no turno..." aria-label="Descrição do alerta" hidden></textarea>
         </div>
 
         <div class="field field--full">
@@ -61,6 +80,22 @@
             <span id="fileNameLabel" class="file-input__name">Nenhum arquivo selecionado</span>
           </div>
         </div>
+
+        <fieldset class="field field--full report-type">
+          <legend>Tipo de relatório</legend>
+          <div class="report-type__options">
+            <label class="report-type__option">
+              <input type="radio" name="reportType" value="gerencia">
+              <span class="report-type__title">Relatório para Gerência</span>
+              <span class="report-type__desc">KPIs, observação, inspeções, alerta e gráficos</span>
+            </label>
+            <label class="report-type__option">
+              <input type="radio" name="reportType" value="troca-turno">
+              <span class="report-type__title">Relatório para Troca de Turno</span>
+              <span class="report-type__desc">Tudo do relatório para Gerência + tabela de chamados pendentes</span>
+            </label>
+          </div>
+        </fieldset>
 
         <div class="form-actions">
           <button type="button" id="btnGerarRelatorio" class="btn btn--primary">Gerar Relatório</button>

@@ -227,6 +227,185 @@ img {
   margin-top: 8px;
 }
 
+/* ---- Inspeções realizadas (somente turno Noturno) ---- */
+
+.inspecoes {
+  padding: 14px 16px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-primary-lighter);
+}
+
+.inspecoes__form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 2fr) auto;
+  gap: 10px;
+}
+
+.inspecoes__form input,
+.alerta-field textarea {
+  font-family: var(--font-base);
+  font-size: 14px;
+  color: var(--color-text);
+  padding: 10px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-white);
+  width: 100%;
+  min-width: 0;
+}
+
+.inspecoes__form input:focus,
+.alerta-field textarea:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-primary-light);
+}
+
+.inspecoes__list {
+  list-style: none;
+  margin: 4px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.inspecoes__list:empty {
+  display: none;
+}
+
+.inspecoes__item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 8px 10px;
+  background: var(--color-white);
+  border: 1px solid var(--color-border);
+  border-left: 3px solid var(--color-primary);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  font-size: 13px;
+}
+
+.inspecoes__text {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.inspecoes__text strong {
+  color: var(--color-primary-dark);
+}
+
+.inspecoes__remove {
+  padding: 4px 10px;
+  font-size: 12px;
+}
+
+.inspecoes__empty {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: var(--color-text-muted);
+  font-style: italic;
+}
+
+/* ---- Alerta (opcional) ---- */
+
+.checkbox {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.field .checkbox span {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text);
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.checkbox input {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  accent-color: var(--color-primary);
+}
+
+.alerta-field textarea {
+  resize: vertical;
+  min-height: 72px;
+  border-color: var(--color-accent-gold);
+  background: #fffaf0;
+}
+
+/* ---- Tipo de relatório ---- */
+
+.report-type {
+  border: none;
+  padding: 0;
+  margin: 0 0 16px;
+  min-width: 0;
+}
+
+.report-type legend {
+  padding: 0;
+  margin-bottom: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text-light);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.report-type__options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.field .report-type__option {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  column-gap: 10px;
+  row-gap: 2px;
+  align-items: center;
+  padding: 12px 14px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-white);
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+  /* anula o estilo de rótulo de campo (.field label) */
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.report-type__option input {
+  grid-row: 1 / span 2;
+  margin: 0;
+  width: 16px;
+  height: 16px;
+  accent-color: var(--color-primary);
+}
+
+.report-type__option:has(input:checked) {
+  border-color: var(--color-primary);
+  background: var(--color-primary-light);
+}
+
+.report-type__title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-primary-dark);
+}
+
+.report-type__desc {
+  font-size: 12px;
+  color: var(--color-text-light);
+}
+
 /* ==========================================================================
    Botões
    ========================================================================== */
@@ -551,6 +730,140 @@ img {
   word-break: break-word;
 }
 
+/* ---- Inspeções realizadas (somente turno Noturno) ---- */
+
+.sheet-inspecoes {
+  padding: 10px 30px 4px;
+}
+
+/* Marcador "•" desenhado via ::before: o marcador nativo de <li> sai
+   desalinhado na captura do html2canvas. */
+.sheet-inspecoes__list {
+  list-style: none;
+  margin: 0;
+  padding: 8px 14px 8px 28px;
+  border: 1px solid var(--color-border);
+  border-left: 3px solid var(--color-primary);
+  background: var(--color-primary-lighter);
+  border-radius: 0 6px 6px 0;
+  font-size: 12px;
+  color: var(--color-text);
+}
+
+.sheet-inspecoes__list li {
+  position: relative;
+  margin: 2px 0;
+  word-break: break-word;
+}
+
+.sheet-inspecoes__list li::before {
+  content: "•";
+  position: absolute;
+  left: -12px;
+  color: var(--color-primary);
+  font-weight: 700;
+}
+
+.sheet-inspecoes__list li.sheet-inspecoes__empty::before {
+  content: none;
+}
+
+.sheet-inspecoes__list li strong {
+  color: var(--color-primary-dark);
+}
+
+.sheet-inspecoes__empty {
+  margin-left: -14px !important;
+  color: var(--color-text-muted);
+  font-style: italic;
+}
+
+/* ---- Alerta (amarelo institucional — dourado da logo) ---- */
+
+.sheet-alerta {
+  padding: 10px 30px 4px;
+}
+
+.sheet-alerta__box {
+  border: 1px solid var(--color-accent-gold);
+  background: #fdf4e3;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+/* Barra de destaque como elemento próprio (mesma técnica dos KPIs, evita
+   artefato do html2canvas com borda espessa em um único lado + radius). */
+.sheet-alerta__accent {
+  height: 4px;
+  background: var(--color-accent-gold);
+}
+
+.sheet-alerta__header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px 0;
+}
+
+/* Ícone de alerta em SVG inline (triângulo + "!"), para renderizar igual na
+   tela e na exportação, sem depender de fonte de emoji. */
+.sheet-alerta__icon {
+  display: block;
+  width: 20px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+.sheet-alerta__title {
+  margin: 0;
+  font-size: 12.5px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  color: #7a5210;
+}
+
+.sheet-alerta__text {
+  padding: 6px 14px 10px;
+  font-size: 12.5px;
+  color: var(--color-text);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* Modo denso: aplicado automaticamente quando observação + inspeções +
+   alerta não cabem na folha com o espaçamento padrão. */
+.report-sheet--dense .sheet-kpis {
+  padding-top: 10px;
+}
+
+.report-sheet--dense .sheet-observacao,
+.report-sheet--dense .sheet-inspecoes,
+.report-sheet--dense .sheet-alerta,
+.report-sheet--dense .sheet-charts-row {
+  padding-top: 6px;
+}
+
+.report-sheet--dense .sheet-observacao__box,
+.report-sheet--dense .sheet-alerta__text {
+  font-size: 11px;
+  padding-top: 5px;
+  padding-bottom: 5px;
+}
+
+.report-sheet--dense .sheet-inspecoes__list {
+  font-size: 10.5px;
+  padding-top: 5px;
+  padding-bottom: 5px;
+}
+
+.report-sheet--dense .sheet-inspecoes__list li {
+  margin: 0;
+}
+
+.report-sheet--dense .sheet-chart-canvas-wrap {
+  height: 130px;
+}
+
 /* ---- Gráficos (EFC e São Luís) ---- */
 
 .sheet-charts-row {
@@ -714,6 +1027,15 @@ img {
 
   .form-grid {
     grid-template-columns: 1fr;
+  }
+
+  .inspecoes__form,
+  .report-type__options {
+    grid-template-columns: 1fr;
+  }
+
+  .inspecoes {
+    padding: 12px;
   }
 
   .report-toolbar {

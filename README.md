@@ -41,10 +41,16 @@ evitando problemas de bloqueio de CDN, CORS ou indisponibilidade externa.
 ## 2. Como usar
 
 1. Abra `index.html` no navegador (ou acesse a página publicada no SharePoint).
-2. Preencha **Data**, **Turno** e, opcionalmente, a **Observação do Turno**.
+2. Preencha a **Data** e, opcionalmente, a **Observação do Turno**.
 3. Clique em **Selecionar Arquivo Excel** e escolha um arquivo `.xlsx` ou `.xls`.
-   O campo **Responsável** (somente leitura) é preenchido automaticamente a
-   partir da coluna "Criado por".
+   Os campos **Responsável** e **Turno** (somente leitura) são preenchidos
+   automaticamente a partir da coluna "Criado por".
+   - Turno **Noturno**: aparece o bloco **Inspeções realizadas** (Local +
+     Situação presente; é possível adicionar várias e remover antes de gerar).
+   - Marque **Registrar alerta no turno** para descrever um alerta (opcional);
+     ele aparece no relatório em um box amarelo "ALERTA".
+   - Escolha o **Tipo de relatório**: *Gerência* (sem tabela de pendências) ou
+     *Troca de Turno* (com a tabela de chamados pendentes).
 4. Clique em **Gerar Relatório**. O sistema irá:
    - Ler a primeira planilha do arquivo;
    - Identificar as colunas oficiais do layout "Rel turno.xlsx";
@@ -84,8 +90,9 @@ acentos, espaços e pontuação). Se alguma faltar, o erro informa qual.
 **Disciplinas:** MCR → Refrigeração · MCI → Cívil · MHI → Hidráulica ·
 MEL → Elétrica · CPV → Pragas e Vetores.
 
-**Responsáveis:** C0731117 → Maria Eduarda · C0731491 → Lívia Cunha ·
-C0730918 → Antônio Ribeiro · C0711275 → Weslly Braga.
+**Responsáveis / Turno:** C0731117 → Maria Eduarda (Diurno) · C0731491 →
+Lívia Cunha (Diurno) · C0730918 → Antônio Ribeiro (Noturno) · C0711275 →
+Weslly Braga (Noturno).
 
 A geração é bloqueada (com mensagem indicando valor e linha) quando o arquivo
 está vazio, falta coluna obrigatória, há status diferente de
@@ -101,7 +108,11 @@ topo do arquivo `js/script.js`:
 
 - **`COLUMN_ALIASES`** — nomes (normalizados) aceitos para cada coluna do Excel.
 - **`DISCIPLINAS`** — mapeamento código de Grp.plnj.PM → disciplina.
-- **`RESPONSAVEIS`** — mapeamento chave de "Criado por" → responsável.
+- **`RESPONSAVEIS`** — mapeamento chave de "Criado por" → `{ nome, turno }`
+  (fonte única de Responsável e Turno).
+- **`TURNO_COM_INSPECOES`** — turno que exibe "Inspeções realizadas" (Noturno).
+- **`REPORT_TYPES`** — tipos de relatório (`gerencia` / `troca-turno`) e se
+  incluem a tabela de pendências.
 - **`LOCALIDADE_EFC_PREFIX`** — prefixo de "CenTrab respon." que indica EFC.
 - **`CHART_PALETTE`** — cores das disciplinas nos gráficos (mesma cor por
   disciplina nos dois gráficos).

@@ -66,12 +66,22 @@
       CPV: "Pragas e Vetores",
     },
 
-    // Chave de "Criado por" → responsável pelo relatório.
+    // Chave de "Criado por" → responsável pelo relatório e seu turno.
+    // Mapeamento único: Responsável e Turno são preenchidos automaticamente daqui.
     RESPONSAVEIS: {
-      C0731117: "Maria Eduarda",
-      C0731491: "Lívia Cunha",
-      C0730918: "Antônio Ribeiro",
-      C0711275: "Weslly Braga",
+      C0731117: { nome: "Maria Eduarda", turno: "Diurno" },
+      C0731491: { nome: "Lívia Cunha", turno: "Diurno" },
+      C0730918: { nome: "Antônio Ribeiro", turno: "Noturno" },
+      C0711275: { nome: "Weslly Braga", turno: "Noturno" },
+    },
+
+    // Turno que habilita o bloco "Inspeções realizadas".
+    TURNO_COM_INSPECOES: "Noturno",
+
+    // Tipos de relatório: somente "troca-turno" inclui a tabela de pendências.
+    REPORT_TYPES: {
+      gerencia: { label: "Gerência", includePendingTable: false },
+      "troca-turno": { label: "Troca de Turno", includePendingTable: true },
     },
 
     // Máximo de exemplos listados em cada mensagem de validação.
@@ -109,6 +119,8 @@
     // Resultado do processamento do Excel selecionado (responsável, registros, erros).
     processed: null,
     processedFile: null,
+    // Inspeções cadastradas no formulário (turno Noturno): [{ local, descricao }].
+    inspecoes: [],
   };
 
   const dom = {};
@@ -131,6 +143,16 @@
     dom.inputObservacao = document.getElementById("inputObservacao");
     dom.inputExcel = document.getElementById("inputExcel");
 
+    dom.inspecoesBlock = document.getElementById("inspecoesBlock");
+    dom.inputInspecaoLocal = document.getElementById("inputInspecaoLocal");
+    dom.inputInspecaoDescricao = document.getElementById("inputInspecaoDescricao");
+    dom.btnAdicionarInspecao = document.getElementById("btnAdicionarInspecao");
+    dom.inspecoesList = document.getElementById("inspecoesList");
+    dom.inspecoesEmpty = document.getElementById("inspecoesEmpty");
+
+    dom.inputAlertaAtivo = document.getElementById("inputAlertaAtivo");
+    dom.inputAlerta = document.getElementById("inputAlerta");
+
     dom.btnSelectFile = document.getElementById("btnSelectFile");
     dom.fileNameLabel = document.getElementById("fileNameLabel");
     dom.btnGerarRelatorio = document.getElementById("btnGerarRelatorio");
@@ -151,7 +173,7 @@
       clearMessages();
       state.processed = null;
       state.processedFile = null;
-      dom.inputResponsavel.value = "";
+      applyResponsavel(null);
 
       if (file) {
         dom.fileNameLabel.textContent = file.name;
@@ -170,10 +192,95 @@
       }
     });
 
+    dom.btnAdicionarInspecao.addEventListener("click", handleAdicionarInspecao);
+    [dom.inputInspecaoLocal, dom.inputInspecaoDescricao].forEach((input) =>
+      input.addEventListener("keydown", (event) => {
+        if (event.key === "Enter") {
+          event.preventDefault();
+          handleAdicionarInspecao();
+        }
+      }),
+    );
+
+    dom.inputAlertaAtivo.addEventListener("change", () => {
+      dom.inputAlerta.hidden = !dom.inputAlertaAtivo.checked;
+      if (dom.inputAlertaAtivo.checked) dom.inputAlerta.focus();
+    });
+
     dom.btnGerarRelatorio.addEventListener("click", handleGerarRelatorio);
     dom.btnGerarImagem.addEventListener("click", handleGerarImagem);
     dom.btnGerarPDF.addEventListener("click", handleGerarPDF);
     dom.btnNovoRelatorio.addEventListener("click", resetToForm);
+  }
+
+  /**
+   * Preenche Responsável e Turno (somente leitura) a partir do responsável
+   * identificado no Excel e mostra/esconde o bloco de inspeções conforme o turno.
+   */
+  function applyResponsavel(responsavel) {
+    dom.inputResponsavel.value = responsavel ? responsavel.nome : "";
+    dom.inputTurno.value = responsavel ? responsavel.turno : "";
+    dom.inspecoesBlock.hidden = !hasInspecoes(responsavel && responsavel.turno);
+  }
+
+  function hasInspecoes(turno) {
+    return turno === CONFIG.TURNO_COM_INSPECOES;
+  }
+
+  // ==========================================================================
+  // 0. INSPEÇÕES REALIZADAS (turno Noturno)
+  // ==========================================================================
+
+  function handleAdicionarInspecao() {
+    clearMessages();
+    const local = dom.inputInspecaoLocal.value.trim();
+    const descricao = dom.inputInspecaoDescricao.value.trim();
+
+    const errors = [];
+    if (!local) errors.push("Informe o Local da inspeção antes de adicioná-la.");
+    if (!descricao)
+      errors.push("Informe a Situação presente da inspeção antes de adicioná-la.");
+    if (errors.length > 0) {
+      errors.forEach((msg) => showMessage(msg, "error"));
+      (local ? dom.inputInspecaoDescricao : dom.inputInspecaoLocal).focus();
+      return;
+    }
+
+    state.inspecoes.push({ local, descricao });
+    dom.inputInspecaoLocal.value = "";
+    dom.inputInspecaoDescricao.value = "";
+    renderInspecoesList();
+    dom.inputInspecaoLocal.focus();
+  }
+
+  function renderInspecoesList() {
+    dom.inspecoesList.innerHTML = "";
+    state.inspecoes.forEach((inspecao, index) => {
+      const li = h("li", "inspecoes__item");
+      const text = h("span", "inspecoes__text");
+      text.appendChild(h("strong", null, `${inspecao.local}: `));
+      text.appendChild(document.createTextNode(inspecao.descricao));
+
+      const btnRemover = h(
+        "button",
+        "btn btn--ghost inspecoes__remove",
+        "Remover",
+      );
+      btnRemover.type = "button";
+      btnRemover.setAttribute(
+        "aria-label",
+        `Remover inspeção ${inspecao.local}`,
+      );
+      btnRemover.addEventListener("click", () => {
+        state.inspecoes.splice(index, 1);
+        renderInspecoesList();
+      });
+
+      li.appendChild(text);
+      li.appendChild(btnRemover);
+      dom.inspecoesList.appendChild(li);
+    });
+    dom.inspecoesEmpty.hidden = state.inspecoes.length > 0;
   }
 
   function setDefaultDate() {
@@ -327,13 +434,21 @@
     return CONFIG.DISCIPLINAS[code] || null;
   }
 
-  /** Chave de "Criado por" → { chave, nome } (nome null se a chave não for conhecida). */
+  /**
+   * Chave de "Criado por" → { chave, nome, turno } (nome/turno null se a chave
+   * não for conhecida).
+   */
   function mapResponsavel(criadoPor) {
     const value = String(criadoPor || "").trim().toUpperCase();
     const chave =
       Object.keys(CONFIG.RESPONSAVEIS).find((key) => value.includes(key)) ||
       value;
-    return { chave, nome: CONFIG.RESPONSAVEIS[chave] || null };
+    const info = CONFIG.RESPONSAVEIS[chave];
+    return {
+      chave,
+      nome: info ? info.nome : null,
+      turno: info ? info.turno : null,
+    };
   }
 
   // ==========================================================================
@@ -387,13 +502,51 @@
     const errors = [];
 
     if (!values.data) errors.push("Informe a data do turno.");
-    if (!values.turno) errors.push("Selecione o turno.");
     if (!values.file) {
       errors.push("Selecione um arquivo Excel para continuar.");
     } else if (!/\.(xlsx|xls)$/i.test(values.file.name)) {
       errors.push(
         "O arquivo selecionado não é um Excel válido (.xlsx ou .xls).",
       );
+    }
+
+    if (!CONFIG.REPORT_TYPES[values.reportType]) {
+      errors.push(
+        'Selecione o tipo de relatório: "Relatório para Gerência" ou "Relatório para Troca de Turno".',
+      );
+    }
+
+    if (values.alertaAtivo && !values.alerta) {
+      errors.push(
+        'A opção "Registrar alerta no turno" está marcada: descreva o alerta ou desmarque a opção.',
+      );
+    }
+
+    return errors;
+  }
+
+  /**
+   * Inspeções (somente turno Noturno): todas as cadastradas precisam ter Local e
+   * Situação presente, e não pode haver uma inspeção digitada e não adicionada.
+   */
+  function validateInspecoes(inspecoes, pendingLocal, pendingDescricao) {
+    const errors = [];
+
+    inspecoes.forEach((inspecao, index) => {
+      if (!inspecao.local)
+        errors.push(`A inspeção ${index + 1} está sem Local.`);
+      if (!inspecao.descricao)
+        errors.push(`A inspeção ${index + 1} está sem Situação presente.`);
+    });
+
+    if (pendingLocal || pendingDescricao) {
+      if (!pendingLocal) {
+        errors.push("Inspeção em preenchimento sem Local: informe o Local ou limpe o campo Situação presente.");
+      } else if (!pendingDescricao) {
+        errors.push("Inspeção em preenchimento sem Situação presente: informe a descrição ou limpe o campo Local.");
+      } else {
+        errors.push('Há uma inspeção preenchida que ainda não foi adicionada: clique em "+ Adicionar inspeção" ou limpe os campos.');
+      }
     }
 
     return errors;
@@ -462,14 +615,15 @@
     // Responsável: todas as linhas precisam apontar para a mesma pessoa.
     const responsaveis = new Map();
     records.forEach((r) => {
-      const { chave, nome } = mapResponsavel(r.criadoPor);
-      if (nome) responsaveis.set(chave, nome);
+      const info = mapResponsavel(r.criadoPor);
+      if (info.nome) responsaveis.set(info.chave, info);
     });
 
+    // { chave, nome, turno } — Responsável e Turno vêm do mesmo mapeamento.
     let responsavel = null;
     if (responsaveis.size > 1) {
-      const lista = Array.from(responsaveis.entries())
-        .map(([chave, nome]) => `${nome} (${chave})`)
+      const lista = Array.from(responsaveis.values())
+        .map(({ chave, nome }) => `${nome} (${chave})`)
         .join(", ");
       errors.push(
         `Foram encontrados diferentes responsáveis no arquivo: ${lista}. ` +
@@ -487,7 +641,7 @@
   // ==========================================================================
 
   /**
-   * Lê e valida o Excel, preenchendo automaticamente o campo Responsável.
+   * Lê e valida o Excel, preenchendo automaticamente Responsável e Turno.
    * O resultado fica em cache para o mesmo arquivo (evita reler ao gerar).
    */
   async function getProcessedExcel(file) {
@@ -509,7 +663,7 @@
 
     state.processed = processed;
     state.processedFile = file;
-    dom.inputResponsavel.value = processed.responsavel || "";
+    applyResponsavel(processed.responsavel);
     return processed;
   }
 
@@ -559,11 +713,14 @@
   async function handleGerarRelatorio() {
     clearMessages();
 
+    const checkedType = document.querySelector('input[name="reportType"]:checked');
     const values = {
       data: dom.inputData.value,
-      turno: dom.inputTurno.value,
       observacao: dom.inputObservacao.value.trim(),
       file: dom.inputExcel.files[0],
+      reportType: checkedType ? checkedType.value : "",
+      alertaAtivo: dom.inputAlertaAtivo.checked,
+      alerta: dom.inputAlerta.value.trim(),
     };
 
     const formErrors = validateFormValues(values);
@@ -584,13 +741,35 @@
         return;
       }
 
+      // Turno vem exclusivamente do mapeamento de "Criado por".
+      const turno = processed.responsavel.turno;
+      const comInspecoes = hasInspecoes(turno);
+
+      if (comInspecoes) {
+        const inspecaoErrors = validateInspecoes(
+          state.inspecoes,
+          dom.inputInspecaoLocal.value.trim(),
+          dom.inputInspecaoDescricao.value.trim(),
+        );
+        if (inspecaoErrors.length > 0) {
+          inspecaoErrors.forEach((msg) => showMessage(msg, "error"));
+          return;
+        }
+      }
+
       const records = processed.records;
 
       const reportData = {
         data: values.data,
-        responsavel: processed.responsavel,
-        turno: values.turno,
+        responsavel: processed.responsavel.nome,
+        turno,
         observacao: values.observacao,
+        // null = seção não exibida (turno Diurno); [] = Noturno sem inspeções.
+        inspecoes: comInspecoes
+          ? state.inspecoes.map((i) => ({ local: i.local, descricao: i.descricao }))
+          : null,
+        alerta: values.alertaAtivo ? values.alerta : "",
+        reportType: values.reportType,
         kpis: calculateKPIs(records),
         grouped: groupByLocalidadeDisciplina(records),
         pending: identifyPendingRecords(records),
@@ -604,7 +783,12 @@
       dom.formPanel.hidden = true;
       dom.reportPanel.hidden = false;
 
-      await renderReport(reportData);
+      const fits = await renderReport(reportData);
+      if (!fits) {
+        throw new Error(
+          "O conteúdo de Observação, Inspeções e Alerta é extenso demais para caber na folha do relatório (816×1056). Reduza os textos e gere novamente.",
+        );
+      }
 
       dom.reportPanel.scrollIntoView({ behavior: "smooth", block: "start" });
 
@@ -619,6 +803,9 @@
       // depois de o painel do relatório já ter sido revelado.
       dom.reportPanel.hidden = true;
       dom.formPanel.hidden = false;
+      state.reportData = null;
+      destroyCharts();
+      dom.reportContainer.innerHTML = "";
     } finally {
       setButtonLoading(dom.btnGerarRelatorio, false, "Gerar Relatório");
     }
@@ -660,36 +847,55 @@
     destroyCharts();
     dom.reportContainer.innerHTML = "";
 
-    const compactMode = reportData.pending.length > CONFIG.COMPACT_THRESHOLD;
+    // "gerencia" → sem tabela de pendências; "troca-turno" → com tabela.
+    const includeTable =
+      CONFIG.REPORT_TYPES[reportData.reportType].includePendingTable;
+    const compactMode =
+      includeTable && reportData.pending.length > CONFIG.COMPACT_THRESHOLD;
 
-    // ---- Folha principal (cabeçalho, info, KPIs, observação, gráfico, pendências) ----
+    // ---- Folha principal (cabeçalho, info, KPIs, observação, inspeções, alerta, gráficos, pendências) ----
     const mainSheet = buildSheetSkeleton(reportData, {
       continuation: false,
       compact: compactMode,
+      includeTable,
     });
     dom.reportContainer.appendChild(mainSheet.root);
 
+    // Observação + inspeções + alerta extensos: aplica espaçamento reduzido;
+    // se ainda assim não couber, a geração é bloqueada (sem cortar conteúdo).
+    if (sheetOverflows(mainSheet)) {
+      mainSheet.root.classList.add("report-sheet--dense");
+      if (sheetOverflows(mainSheet)) return false;
+    }
+
     const pages = [mainSheet];
 
-    if (reportData.pending.length === 0) {
+    // Relatório para Gerência (includeTable = false): folha única, sem tabela.
+    if (includeTable && reportData.pending.length === 0) {
       const empty = h(
         "p",
         "sheet-table-empty",
         "Nenhum chamado pendente identificado neste turno.",
       );
       mainSheet.tableSectionEl.appendChild(empty);
-    } else {
+    } else if (includeTable) {
       const { fitted, remaining } = fitRowsToPage(
         mainSheet,
         reportData.pending,
         compactMode,
       );
-      updateTableNote(
-        mainSheet.noteEl,
-        fitted.length,
-        reportData.pending.length,
-        remaining.length > 0,
-      );
+      if (fitted.length === 0) {
+        // Sem espaço para nenhuma linha na folha principal (observação/
+        // inspeções/alerta extensos): a tabela começa na folha seguinte.
+        mainSheet.tableSectionEl.remove();
+      } else {
+        updateTableNote(
+          mainSheet.noteEl,
+          fitted.length,
+          reportData.pending.length,
+          remaining.length > 0,
+        );
+      }
 
       let pendingRemaining = remaining;
       let pageIndex = 2;
@@ -700,6 +906,7 @@
         const continuationSheet = buildSheetSkeleton(reportData, {
           continuation: true,
           compact: compactMode,
+          includeTable,
           pageIndex,
         });
         dom.reportContainer.appendChild(continuationSheet.root);
@@ -756,6 +963,15 @@
         maxTotal,
       );
     }
+
+    return true;
+  }
+
+  /** true se o conteúdo empurrou o rodapé para fora dos 1056px da folha. */
+  function sheetOverflows(page) {
+    const sheetTop = page.root.getBoundingClientRect().top;
+    const footerBottom = page.footerEl.getBoundingClientRect().bottom;
+    return footerBottom > sheetTop + CONFIG.SHEET_HEIGHT + 0.5;
   }
 
   /**
@@ -852,6 +1068,16 @@
       );
       root.appendChild(obsSection);
 
+      // ---- Inspeções realizadas (somente turno Noturno) ----
+      if (reportData.inspecoes) {
+        root.appendChild(buildInspecoesSection(reportData.inspecoes));
+      }
+
+      // ---- Alerta (somente quando registrado) ----
+      if (reportData.alerta) {
+        root.appendChild(buildAlertaSection(reportData.alerta));
+      }
+
       // ---- Gráficos (um por localidade, lado a lado, mesma estrutura visual) ----
       const chartsRow = h("div", "sheet-charts-row");
       root.appendChild(chartsRow);
@@ -873,28 +1099,33 @@
       });
     }
 
-    // ---- Tabela de pendências ----
-    const tableSection = h("div", "sheet-table-section");
-    tableSection.appendChild(
-      h("p", "sheet-section-label", "Chamados Pendentes"),
-    );
-    const noteEl = h("p", "sheet-table-note", "");
-    tableSection.appendChild(noteEl);
+    // ---- Tabela de pendências (somente relatório para Troca de Turno) ----
+    let tableSection = null;
+    let noteEl = null;
+    let tbody = null;
+    if (options.includeTable) {
+      tableSection = h("div", "sheet-table-section");
+      tableSection.appendChild(
+        h("p", "sheet-section-label", "Chamados Pendentes"),
+      );
+      noteEl = h("p", "sheet-table-note", "");
+      tableSection.appendChild(noteEl);
 
-    const table = document.createElement("table");
-    table.className = "sheet-table";
-    const thead = document.createElement("thead");
-    const headRow = document.createElement("tr");
-    ["Ordem", "Texto Breve", "Disciplina", "Status"].forEach((label) => {
-      headRow.appendChild(h("th", null, label));
-    });
-    thead.appendChild(headRow);
-    const tbody = document.createElement("tbody");
-    table.appendChild(thead);
-    table.appendChild(tbody);
-    tableSection.appendChild(table);
+      const table = document.createElement("table");
+      table.className = "sheet-table";
+      const thead = document.createElement("thead");
+      const headRow = document.createElement("tr");
+      ["Ordem", "Texto Breve", "Disciplina", "Status"].forEach((label) => {
+        headRow.appendChild(h("th", null, label));
+      });
+      thead.appendChild(headRow);
+      tbody = document.createElement("tbody");
+      table.appendChild(thead);
+      table.appendChild(tbody);
+      tableSection.appendChild(table);
 
-    root.appendChild(tableSection);
+      root.appendChild(tableSection);
+    }
 
     // ---- Rodapé ----
     const footer = h("div", "sheet-footer");
@@ -918,6 +1149,67 @@
       pageNumberEl,
       chartCanvases,
     };
+  }
+
+  /** Lista "Local: descrição" — um <li> por inspeção. */
+  function buildInspecoesSection(inspecoes) {
+    const section = h("div", "sheet-inspecoes");
+    section.appendChild(h("p", "sheet-section-label", "Inspeções Realizadas"));
+
+    const list = h("ul", "sheet-inspecoes__list");
+    if (inspecoes.length === 0) {
+      list.appendChild(
+        h(
+          "li",
+          "sheet-inspecoes__empty",
+          "Nenhuma inspeção registrada neste turno.",
+        ),
+      );
+    }
+    inspecoes.forEach(({ local, descricao }) => {
+      const li = document.createElement("li");
+      li.appendChild(h("strong", null, `${local}:`));
+      li.appendChild(document.createTextNode(` ${descricao}`));
+      list.appendChild(li);
+    });
+    section.appendChild(list);
+    return section;
+  }
+
+  /** Box de alerta destacado (amarelo institucional), com o texto exato informado. */
+  function buildAlertaSection(texto) {
+    const section = h("div", "sheet-alerta");
+    const box = h("div", "sheet-alerta__box");
+    box.appendChild(h("div", "sheet-alerta__accent"));
+
+    const header = h("div", "sheet-alerta__header");
+    const SVG_NS = "http://www.w3.org/2000/svg";
+    const icon = document.createElementNS(SVG_NS, "svg");
+    icon.setAttribute("class", "sheet-alerta__icon");
+    icon.setAttribute("viewBox", "0 0 20 18");
+    icon.setAttribute("width", "20");
+    icon.setAttribute("height", "18");
+    icon.setAttribute("aria-hidden", "true");
+    const triangle = document.createElementNS(SVG_NS, "path");
+    triangle.setAttribute("d", "M10 1 L19 17 L1 17 Z");
+    triangle.setAttribute("fill", "#e8a431");
+    triangle.setAttribute("stroke", "#e8a431");
+    triangle.setAttribute("stroke-width", "1.5");
+    triangle.setAttribute("stroke-linejoin", "round");
+    const mark = document.createElementNS(SVG_NS, "path");
+    mark.setAttribute("d", "M10 6.5 V11.5 M10 13.8 V14.2");
+    mark.setAttribute("stroke", "#ffffff");
+    mark.setAttribute("stroke-width", "2.2");
+    mark.setAttribute("stroke-linecap", "round");
+    icon.appendChild(triangle);
+    icon.appendChild(mark);
+    header.appendChild(icon);
+    header.appendChild(h("p", "sheet-alerta__title", "ALERTA"));
+    box.appendChild(header);
+
+    box.appendChild(h("div", "sheet-alerta__text", texto));
+    section.appendChild(box);
+    return section;
   }
 
   function buildInfoItem(label, value) {
@@ -1253,7 +1545,8 @@
     const dateForFile = reportData.data
       ? reportData.data.split("-").reverse().join("-")
       : "sem-data";
-    return `Relatorio_Turno_CCM_${dateForFile}_${sanitizeFileNamePart(reportData.turno)}`;
+    const tipo = CONFIG.REPORT_TYPES[reportData.reportType].label;
+    return `Relatorio_Turno_CCM_${dateForFile}_${sanitizeFileNamePart(reportData.turno)}_${sanitizeFileNamePart(tipo)}`;
   }
 
   function triggerDownload(dataUrl, filename) {
