@@ -90,9 +90,6 @@ acentos, espaços e pontuação). Se alguma faltar, o erro informa qual.
 **Disciplinas:** MCR → Refrigeração · MCI → Cívil · MHI → Hidráulica ·
 MEL → Elétrica · CPV → Pragas e Vetores.
 
-**Responsáveis / Turno:** C0731117 → Maria Eduarda (Diurno) · C0731491 →
-Lívia Cunha (Diurno) · C0730918 → Antônio Ribeiro (Noturno) · C0711275 →
-Weslly Braga (Noturno).
 
 A geração é bloqueada (com mensagem indicando valor e linha) quando o arquivo
 está vazio, falta coluna obrigatória, há status diferente de
